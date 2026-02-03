@@ -31,6 +31,7 @@ jobs:
         echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
     - name: Render ECS Task Definition
+      id: render-task
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: task-definition.json
@@ -42,5 +43,5 @@ jobs:
       with:
         cluster: my-ecs-cluster
         service: my-app-service
-        task-definition: task-definition.json
+        task-definition: ${{ steps.render-task.outputs.task-definition }}
         wait-for-service-stability: true
