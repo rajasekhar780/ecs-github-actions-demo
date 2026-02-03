@@ -23,7 +23,24 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v2
 
     - name: Build and Push Image
+      id: build-image
       run: |
         IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
         docker build -t $IMAGE .
         docker push $IMAGE
+        echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+    - name: Render ECS Task Definition
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: app
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy to ECS Service
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        cluster: my-ecs-cluster
+        service: my-app-service
+        task-definition: task-definition.json
+        wait-for-service-stability: true
